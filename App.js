@@ -126,6 +126,7 @@ class App extends Component {
             ...this.state,
             photoAsBase64: { content: image, isPhotoPreview: true, photoPath: image },
           })
+            //console.log(image)
         })
         // OpenCV.checkForBlurryImage(imageAsBase64, error => {
         //   // error handling
