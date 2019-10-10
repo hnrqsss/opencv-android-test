@@ -126,7 +126,7 @@ class App extends Component {
             ...this.state,
             photoAsBase64: { content: image, isPhotoPreview: true, photoPath: image },
           })
-            //console.log(image)
+            // console.log(image)
         })
         // OpenCV.checkForBlurryImage(imageAsBase64, error => {
         //   // error handling
@@ -221,6 +221,7 @@ class App extends Component {
           ref={cam => {
             this.camera = cam;
           }}
+          autoFocus={true}
           style={styles.preview}
           permissionDialogTitle={'Permission to use camera'}
           permissionDialogMessage={'We need your permission to use your camera phone'}
