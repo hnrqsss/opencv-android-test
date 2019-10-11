@@ -803,6 +803,11 @@
     "@types/istanbul-reports" "^1.1.1"
     "@types/yargs" "^13.0.0"
 
+"@react-native-community/cameraroll@^1.2.1":
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/@react-native-community/cameraroll/-/cameraroll-1.2.1.tgz#68ae3a1de07dd5db8ce9d898057f30c1585c7f1d"
+  integrity sha512-dMvzCano5/ltQYbF4AOEHe0vaW3Owt05S4y+gJ6PlBp2/YfQAVv7XNgvsvF2CKz4oPKuZAOchENDV/J+nbMbWg==
+
 "@react-native-community/cli@^1.2.1":
   version "1.11.2"
   resolved "https://registry.yarnpkg.com/@react-native-community/cli/-/cli-1.11.2.tgz#b14967f24a389f5a16889a747345cf0e5757a2f1"
@@ -1288,6 +1293,11 @@ balanced-match@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/balanced-match/-/balanced-match-1.0.0.tgz#89b4d199ab2bee49de164ea02b89ce462d71b767"
   integrity sha1-ibTRmasr7kneFk6gK4nORi1xt2c=
+
+base-64@0.1.0, base-64@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/base-64/-/base-64-0.1.0.tgz#780a99c84e7d600260361511c4877613bf24f6bb"
+  integrity sha1-eAqZyE59YAJgNhURxId2E78k9rs=
 
 base64-js@^1.1.2, base64-js@^1.2.3:
   version "1.3.1"
@@ -2469,6 +2479,18 @@ glob-parent@^2.0.0:
   integrity sha1-gTg9ctsFT8zPUzbaqQLxgvbtuyg=
   dependencies:
     is-glob "^2.0.0"
+
+glob@7.0.6:
+  version "7.0.6"
+  resolved "https://registry.yarnpkg.com/glob/-/glob-7.0.6.tgz#211bafaf49e525b8cd93260d14ab136152b3f57a"
+  integrity sha1-IRuvr0nlJbjNkyYNFKsTYVKz9Xo=
+  dependencies:
+    fs.realpath "^1.0.0"
+    inflight "^1.0.4"
+    inherits "2"
+    minimatch "^3.0.2"
+    once "^1.3.0"
+    path-is-absolute "^1.0.0"
 
 glob@^7.1.1, glob@^7.1.2, glob@^7.1.3:
   version "7.1.4"
@@ -4094,7 +4116,7 @@ min-document@^2.19.0:
   dependencies:
     dom-walk "^0.1.0"
 
-minimatch@^3.0.4:
+minimatch@^3.0.2, minimatch@^3.0.4:
   version "3.0.4"
   resolved "https://registry.yarnpkg.com/minimatch/-/minimatch-3.0.4.tgz#5166e286457f03306064be5497e8dbb0c3d32083"
   integrity sha512-yJHVQEhyqPLUTgt9B83PXu6W3rx4MvvHvSUvToogpwoGDOUQ+yDrR0HRot+yOCdCO7u4hX3pWft6kWBBcqh0UA==
@@ -4869,6 +4891,27 @@ react-native-easy-toast@^1.2.0:
   integrity sha512-UtpxnRn1ME+035Uey4VR+9K0P4aVoTcWNOx5QkioWBe3LBKMPb/kZjrQ1LtvWzOyeGP4TeTUTtMX3IOPWv5MtA==
   dependencies:
     prop-types "^15.5.10"
+
+react-native-fetch-blob@^0.10.8:
+  version "0.10.8"
+  resolved "https://registry.yarnpkg.com/react-native-fetch-blob/-/react-native-fetch-blob-0.10.8.tgz#4fc256abae0cb5f10e7c41f28c11b3ff330d72a9"
+  integrity sha1-T8JWq64MtfEOfEHyjBGz/zMNcqk=
+  dependencies:
+    base-64 "0.1.0"
+    glob "7.0.6"
+
+react-native-fs@^2.14.1:
+  version "2.14.1"
+  resolved "https://registry.yarnpkg.com/react-native-fs/-/react-native-fs-2.14.1.tgz#61c70a865b5b5bcb020dd4e4befd60a2c20c836f"
+  integrity sha512-ZcfiwNP+FBgvv2eRk0B62/NI58mbjszjjYvQlP352HLkUqVsK4Ld6X8fdBO1lZAz6SgitUk8WEc9NEciRIt31g==
+  dependencies:
+    base-64 "^0.1.0"
+    utf8 "^2.1.1"
+
+react-native-image-base64@^0.1.3:
+  version "0.1.3"
+  resolved "https://registry.yarnpkg.com/react-native-image-base64/-/react-native-image-base64-0.1.3.tgz#bfc9eaf7cd3ec705aa25f00f6a11d0c379217fe8"
+  integrity sha512-0n1gLLvA9VJZ1w0zyaDYZQH/Re2VOQFW5kt0P/qYhqs4f1MvWsaTs+7CxXIQR3L2wgEsfDJ1sIKyrAZ0RoR2Hg==
 
 react-native-svg@^9.11.1:
   version "9.11.1"
@@ -5971,6 +6014,11 @@ use@^3.1.0:
   version "3.1.1"
   resolved "https://registry.yarnpkg.com/use/-/use-3.1.1.tgz#d50c8cac79a19fbc20f2911f56eb973f4e10070f"
   integrity sha512-cwESVXlO3url9YWlFW/TA9cshCEhtu7IKJ/p5soJ/gGpj7vbvFrAY/eIioQ6Dw23KjZhYgiIo8HOs1nQ2vr/oQ==
+
+utf8@^2.1.1:
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/utf8/-/utf8-2.1.2.tgz#1fa0d9270e9be850d9b05027f63519bf46457d96"
+  integrity sha1-H6DZJw6b6FDZsFAn9jUZv0ZFfZY=
 
 util-deprecate@~1.0.1:
   version "1.0.2"

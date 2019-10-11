@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { RNCamera as Camera } from 'react-native-camera';
 import Toast, {DURATION} from 'react-native-easy-toast'
+import CameraRoll from "@react-native-community/cameraroll";
 
 import OpenCV from './src/NativeModules/OpenCV';
 import CircleWithinCircle from './src/assets/svg/CircleWithinCircle';
@@ -121,6 +122,7 @@ class App extends Component {
   checkForBlurryImage(imageAsBase64) {
     return new Promise((resolve, reject) => {
       if (Platform.OS === 'android') {
+
         OpenCV.stepsTogetCorner(imageAsBase64, (err) => console.log(err), image => {
           this.setState({
             ...this.state,
