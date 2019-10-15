@@ -23,6 +23,7 @@ import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.utils.Converters;
 
 import android.graphics.drawable.Drawable;
 import android.os.Environment;
@@ -35,6 +36,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -53,6 +55,8 @@ public class RNOpenCvLibraryModule extends ReactContextBaseJavaModule {
     MatOfPoint contour;
     Size size;
     Mat cannyImage;
+    List<MatOfPoint> finalPoints;
+    Point[] sortPoints;
 
     public RNOpenCvLibraryModule(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -77,15 +81,14 @@ public class RNOpenCvLibraryModule extends ReactContextBaseJavaModule {
         this.widthRatio = Double.valueOf(this.originalImage.size().width / ratio).intValue();
         this.size = new Size(this.widthRatio, this.heightRatio);
 
-        //changing to gray scaling and detect canny edges in resized Images
         resizedImage = new Mat(this.size, CvType.CV_8UC4);
         grayImage = new Mat(this.size, CvType.CV_8UC4);
         cannedImage = new Mat(this.size, CvType.CV_8UC1);
 
         Imgproc.resize(this.originalImage, resizedImage, this.size);
         Imgproc.cvtColor(resizedImage, grayImage, Imgproc.COLOR_RGBA2GRAY, 4);
-
-        Imgproc.Canny(grayImage, cannedImage, 80, 100, 3, false);
+        Imgproc.adaptiveThreshold(grayImage, grayImage, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY_INV, 13, 12);
+        Imgproc.Canny(grayImage.clone(), cannedImage, 50, 150, 3, false);
 
         this.cannyImage = cannedImage;
 
@@ -95,6 +98,8 @@ public class RNOpenCvLibraryModule extends ReactContextBaseJavaModule {
 
         Imgproc.findContours(cannedImage, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
 
+        hierarchy.release();
+
         //Order contours Area greater till lowest
         Collections.sort(contours, new Comparator<MatOfPoint>() {
             @Override
@@ -102,6 +107,10 @@ public class RNOpenCvLibraryModule extends ReactContextBaseJavaModule {
                 return Double.valueOf(Imgproc.contourArea(next)).compareTo(Imgproc.contourArea(prev));
             }
         });
+
+        ArrayList<MatOfPoint> srcContours = new ArrayList<>(Arrays.asList(contour));
+
+        Log.d("OPEN_CV_ARRAY", srcContours+"");
 
         return contours;
     }
@@ -113,7 +122,7 @@ public class RNOpenCvLibraryModule extends ReactContextBaseJavaModule {
 //        options.inDither = true;
 //        options.inPreferredConfig = Bitmap.Config.ARGB_8888;
 //
-//        byte[] decodedString = Base64.decode(imageBase64, Base64.DEFAULT);
+//        byte[] decodedString = Base64.decode(image, Base64.DEFAULT);
 //        Bitmap image = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
 
         Mat imageMat = new Mat();
@@ -150,31 +159,44 @@ public class RNOpenCvLibraryModule extends ReactContextBaseJavaModule {
         return  maxIndex;
     }
 
-    private Point[] sortPoints(Point[] src) {
+    private void sortPoints(Point[] src) {
 
         ArrayList<Point> srcPoints = new ArrayList<>(Arrays.asList(src));
 
-        Log.d("BEFORE", srcPoints+"");
+        //Log.d("BEFORE", srcPoints+"");
 
         Point[] sortedPoints = { null, null, null, null };
 
-        double[] arraySum = { 0, 0, 0, 0};
-        double[] arrayDiff = { 0, 0, 0, 0};
+        Comparator<Point> sumComparator = new Comparator<Point>() {
+            @Override
+            public int compare(Point lhs, Point rhs) {
+                return Double.valueOf(lhs.y + lhs.x).compareTo(rhs.y + rhs.x);
+            }
+        };
 
-        for(int i = 0; i < srcPoints.size(); i++ ) {
-            arraySum[i] = src[i].x + src[i].y;
-            arrayDiff[i] = src[i].y - src[i].x;
-        }
+        Comparator<Point> diffComparator = new Comparator<Point>() {
 
-        sortedPoints[0] = src[argMin(arraySum)]; //tl
-        sortedPoints[2] = src[argMax(arraySum)]; //tr
-        sortedPoints[1] = src[argMin(arrayDiff)]; //br
-        sortedPoints[3] = src[argMax(arrayDiff)]; //bl
+            @Override
+            public int compare(Point lhs, Point rhs) {
+                return Double.valueOf(lhs.y - lhs.x).compareTo(rhs.y - rhs.x);
+            }
+        };
 
-        ArrayList<Point> after = new ArrayList<>(Arrays.asList(sortedPoints));
+        //top left = minimal sum
+        sortedPoints[0] = Collections.min(srcPoints, sumComparator);
 
-        Log.d("AFTER", after+"");
-        return sortedPoints;
+        // bottom-right  = maximal sum
+        sortedPoints[2] = Collections.max(srcPoints, sumComparator);
+
+        // top-right  = minimal diference
+        sortedPoints[1] = Collections.min(srcPoints, diffComparator);
+
+        // bottom-left  = maximal diference
+        sortedPoints[3] = Collections.max(srcPoints, diffComparator);
+
+
+        //Log.d("AFTER", sortedPoints+"");
+        this.sortPoints = sortedPoints;
     }
 
     private Point[] detectRect(ArrayList<MatOfPoint> contours) {
@@ -191,13 +213,13 @@ public class RNOpenCvLibraryModule extends ReactContextBaseJavaModule {
             Point[] points = approx.toArray();
             ArrayList<Point> srcPoints = new ArrayList<>(Arrays.asList(points));
 
-//            Log.d("AREA", Imgproc.contourArea(c)+"");
-//            Log.d("POINTS", srcPoints+"");
-//            Log.d("POINTS_LENGTH", srcPoints.size()+"");
+            Log.d("AREA", Imgproc.contourArea(c)+"");
+            Log.d("POINTS", srcPoints+"");
+            Log.d("POINTS_LENGTH", srcPoints.size()+"");
 
             if(srcPoints.size() == 4) {
-//                Log.d("CHOOSED_AREA", Imgproc.contourArea(c)+"");
-//                Log.d("CHOOSED_POINTS", srcPoints+"");
+                Log.d("CHOOSED_AREA", Imgproc.contourArea(c)+"");
+                Log.d("CHOOSED_POINTS", srcPoints+"");
                 this.contour = c;
                 return  points;
             }
@@ -206,44 +228,78 @@ public class RNOpenCvLibraryModule extends ReactContextBaseJavaModule {
         return null;
     }
 
-    private Mat drawRect(Point[] points) {
+    private ArrayList<MatOfPoint> defaultPoints(Point[] points) {
+
+        for(Point p : points) {
+            p.x = p.x * this.ratio;
+            p.y = p.y * this.ratio;
+        }
+
+        MatOfPoint mPoints = new MatOfPoint();
+        mPoints.fromArray(points);
+
+        ArrayList<MatOfPoint> finalPoints = new ArrayList<MatOfPoint>();
+        finalPoints.add(mPoints);
+        return finalPoints;
+    }
+
+    private Mat changePerspective() {
+
+        Point[] points = this.sortPoints;
+
 
         if(points != null) {
 
-            double[] tl = {points[0].x*this.ratio, points[0].y*this.ratio};
-            double[] tr = {points[2].x*this.ratio, points[2].y*this.ratio};
-            double[] br = {points[1].x*this.ratio, points[1].y*this.ratio};
-            double[] bl = {points[3].x*this.ratio, points[3].y*this.ratio};
+            Mat image = this.originalImage.clone();
 
-            double widthA = Math.sqrt(Math.pow(br[0] - bl[0], 2) + Math.pow(br[1] - bl[1], 2));
-            double widthB = Math.sqrt(Math.pow(tr[0] - tl[0], 2) + Math.pow(tr[1] - tl[1], 2));
-            double maxWidth = widthA > widthB ? widthA : widthB;
+            Point tl = new Point(points[0].x*this.ratio, points[0].y*this.ratio);
+            Point tr = new Point(points[1].x*this.ratio, points[1].y*this.ratio);
+            Point br = new Point(points[2].x*this.ratio, points[2].y*this.ratio);
+            Point bl = new Point(points[3].x*this.ratio, points[3].y*this.ratio);
 
-            double heightA = Math.sqrt(Math.pow(tr[0] - br[0], 2) + Math.pow(tr[1] - br[1], 2));
-            double heightB = Math.sqrt(Math.pow(tl[0] - bl[0], 2) + Math.pow(tl[1] - bl[1], 2));
-            double maxHeight = heightA > heightB ? heightA : heightB;
-            Mat dst = Mat.zeros(4,2,CvType.CV_32FC2);
+            double widthA = Math.sqrt(Math.pow(br.x - bl.x, 2) + Math.pow(br.y - bl.y, 2));
+            double widthB = Math.sqrt(Math.pow(tr.x - tl.x, 2) + Math.pow(tr.y - tl.y, 2));
 
-            dst.put(0,0, (maxWidth - 1),0, (maxWidth - 1), (maxHeight - 1), 0, (maxHeight - 1));
+            double dw = Math.max(widthA, widthB);
+            int maxWidth = Double.valueOf(dw).intValue();
 
-            Mat pespective = Imgproc.getPerspectiveTransform(this.originalImage, dst);
+            double heightA = Math.sqrt(Math.pow(tr.x - br.x, 2) + Math.pow(tr.y - br.y, 2));
+            double heightB = Math.sqrt(Math.pow(tl.x - bl.x, 2) + Math.pow(tl.y - bl.y, 2));
 
-            Mat finalImage = new Mat();
+            double dh = Math.max(heightA, heightB);
+            int maxHeight = Double.valueOf(dh).intValue();
 
-            Imgproc.warpPerspective(this.originalImage, finalImage, pespective, new Size(maxWidth, maxHeight));
+            ArrayList<Point> srcPoints = new ArrayList<>();
+            ArrayList<Point> target = new ArrayList<>();
 
-            return  finalImage;
+            srcPoints.add(tl);
+            srcPoints.add(tr);
+            srcPoints.add(br);
+            srcPoints.add(bl);
+
+            target.add(new Point(0,0));
+            target.add(new Point(maxWidth - 1,0));
+            target.add(new Point(maxWidth - 1,maxHeight - 1));
+            target.add(new Point(0,maxHeight - 1));
+
+            Mat M = Imgproc.getPerspectiveTransform(Converters.vector_Point_to_Mat(srcPoints, CvType.CV_32F),
+                    Converters.vector_Point_to_Mat(target, CvType.CV_32F));
+
+            Mat output = new Mat(maxHeight, maxWidth, CvType.CV_8UC4);
+
+            Imgproc.warpPerspective(image, output, M, new Size(maxWidth, maxHeight));
+
+            return output;
 
         }
 
         return this.originalImage;
-
     }
 
     @ReactMethod
     public  void stepsTogetCorner(String imageAsBase64, Callback errorCallback, Callback successCallback) {
         try {
-            String path = Environment.getExternalStorageDirectory().getAbsolutePath()+"/image2.jpg";
+            String path = Environment.getExternalStorageDirectory().getAbsolutePath()+"/image5.jpg";
 
             File file = new File(path);
 
@@ -262,7 +318,6 @@ public class RNOpenCvLibraryModule extends ReactContextBaseJavaModule {
 
             Bitmap bm = BitmapFactory.decodeStream(fis);
 
-
             //Converting image
             turnIntoMap(bm);
 
@@ -270,21 +325,22 @@ public class RNOpenCvLibraryModule extends ReactContextBaseJavaModule {
 
             Point[] rectPoints = detectRect(contours);
 
-            Mat finalImage;
+            sortPoints(rectPoints);
 
-            Point[] sortedPoints = rectPoints != null ? sortPoints(rectPoints) : null;
+            Mat perspective = changePerspective();
 
-            finalImage = sortedPoints != null ? this.originalImage : drawRect(sortedPoints);
-
-            Imgproc.rectangle(finalImage, new Point(sortedPoints[0].x*this.ratio, sortedPoints[0].y*this.ratio), new Point(sortedPoints[3].x*this.ratio, sortedPoints[3].y*this.ratio), new Scalar(0,255,0), 5 );
+            //To show rect
+            //ArrayList<MatOfPoint> screenCnt = defaultPoints(rectPoints);
+            //Imgproc.drawContours(this.originalImage, screenCnt, -1, new Scalar(0,255,0), 5);
 
             //Bitmap imageConvert;
-            Bitmap imageConvert = Bitmap.createBitmap(finalImage.cols(), finalImage.rows(), Bitmap.Config.ARGB_8888);
-            Utils.matToBitmap(finalImage, imageConvert);
+            Bitmap imageConvert = Bitmap.createBitmap(perspective.cols(), perspective.rows(), Bitmap.Config.ARGB_8888);
+            Utils.matToBitmap(perspective, imageConvert);
 
             //convert bitmap into base64 string
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             imageConvert.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
+
             byte[] byteArray = byteArrayOutputStream .toByteArray();
             String encoded = Base64.encodeToString(byteArray, Base64.DEFAULT);
 
@@ -295,5 +351,28 @@ public class RNOpenCvLibraryModule extends ReactContextBaseJavaModule {
             errorCallback.invoke(e.getMessage());
         }
 
+    }
+
+    private void saveImage(Bitmap image) {
+        String root = Environment.getExternalStorageDirectory().getAbsolutePath();
+        File myDir = new File(root + "/saved_images");
+        myDir.mkdirs();
+
+        String fname = "Image.jpg";
+        File file = new File (myDir, fname);
+
+        Log.d("SAVE", "AQUI");
+
+        if (file.exists ()) file.delete ();
+        try {
+            FileOutputStream out = new FileOutputStream(file);
+            image.compress(Bitmap.CompressFormat.JPEG, 90, out);
+            out.flush();
+            out.close();
+
+            Log.d("SAVE", "OK");
+        } catch (Exception e) {
+            Log.d("SAVE_ERROR", e.getMessage());
+        }
     }
 }

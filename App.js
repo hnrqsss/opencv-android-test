@@ -6,6 +6,7 @@ import {
   Image,
   TouchableOpacity,
   StyleSheet,
+  PermissionsAndroid,
 } from 'react-native';
 import { RNCamera as Camera } from 'react-native-camera';
 import Toast, {DURATION} from 'react-native-easy-toast'
@@ -13,7 +14,7 @@ import CameraRoll from "@react-native-community/cameraroll";
 
 import OpenCV from './src/NativeModules/OpenCV';
 import CircleWithinCircle from './src/assets/svg/CircleWithinCircle';
-
+import RNFS from 'react-native-fs'
 const styles = StyleSheet.create({
   imagePreview: {
     position: 'absolute',
@@ -119,14 +120,21 @@ class App extends Component {
     },
   };
 
-  checkForBlurryImage(imageAsBase64) {
+  async checkForBlurryImage(imageAsBase64) {
     return new Promise((resolve, reject) => {
       if (Platform.OS === 'android') {
 
-        OpenCV.stepsTogetCorner(imageAsBase64, (err) => console.log(err), image => {
+        OpenCV.stepsTogetCorner(imageAsBase64, (err) => console.log(err), async image => {
           this.setState({
             ...this.state,
             photoAsBase64: { content: image, isPhotoPreview: true, photoPath: image },
+          }, () => {
+            //const path = RNFS.DocumentDirectoryPath + '/image.jpg'
+            //RNFS.writeFile(path, image, 'base64')
+              //.then(res => {
+                //console.log(res, path)
+              //}).catch(err => console.log('err', err))
+          
           })
             // console.log(image)
         })
@@ -144,6 +152,23 @@ class App extends Component {
       }
     });
   }
+
+  requestExternalStoragePermission = async () => {
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+        {
+          title: 'My App Storage Permission',
+          message: 'My App needs access to your storage ' +
+            'so you can save your photos',
+        },
+      );
+      return granted;
+    } catch (err) {
+      console.error('Failed to request permission ', err);
+      return null;
+    }
+  };
 
   proceedWithCheckingBlurryImage() {
     const { content, photoPath } = this.state.photoAsBase64;
@@ -184,6 +209,7 @@ class App extends Component {
       },
     });
   }
+
 
   usePhoto() {
     // do something, e.g. navigate
