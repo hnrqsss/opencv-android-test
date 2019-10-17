@@ -14,3 +14,4 @@ project(':react-native-svg').projectDir = new File(rootProject.projectDir, '../n
 
 include ':app'
 include ':openCVLibrary346'
+include ':opencv4'

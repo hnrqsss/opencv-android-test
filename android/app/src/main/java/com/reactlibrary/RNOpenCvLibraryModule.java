@@ -87,7 +87,7 @@ public class RNOpenCvLibraryModule extends ReactContextBaseJavaModule {
 
         Imgproc.resize(this.originalImage, resizedImage, this.size);
         Imgproc.cvtColor(resizedImage, grayImage, Imgproc.COLOR_RGBA2GRAY, 4);
-        Imgproc.adaptiveThreshold(grayImage, grayImage, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY_INV, 13, 12);
+//        Imgproc.adaptiveThreshold(grayImage, grayImage, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY_INV, 13, 12);
         Imgproc.Canny(grayImage.clone(), cannedImage, 50, 150, 3, false);
 
         this.cannyImage = cannedImage;
@@ -299,7 +299,7 @@ public class RNOpenCvLibraryModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public  void stepsTogetCorner(String imageAsBase64, Callback errorCallback, Callback successCallback) {
         try {
-            String path = Environment.getExternalStorageDirectory().getAbsolutePath()+"/image5.jpg";
+            String path = Environment.getExternalStorageDirectory().getAbsolutePath()+"/image1.jpg";
 
             File file = new File(path);
 
