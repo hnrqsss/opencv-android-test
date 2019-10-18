@@ -7,25 +7,25 @@ import {
   TouchableOpacity,
   StyleSheet,
   PermissionsAndroid,
+  Alert,
 } from 'react-native';
 import { RNCamera as Camera } from 'react-native-camera';
-import Toast, {DURATION} from 'react-native-easy-toast'
+
 import CameraRoll from "@react-native-community/cameraroll";
 
 import OpenCV from './src/NativeModules/OpenCV';
 import CircleWithinCircle from './src/assets/svg/CircleWithinCircle';
 import RNFS from 'react-native-fs'
+
 const styles = StyleSheet.create({
   imagePreview: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    left: 0,
-    bottom: 60,
+    width: '100%',
+    height: '100%',
   },
   container: {
     flex: 1,
     flexDirection: 'row',
+    backgroundColor: '#000'
   },
   repeatPhotoContainer: {
     position: 'absolute',
@@ -124,7 +124,16 @@ class App extends Component {
     return new Promise((resolve, reject) => {
       if (Platform.OS === 'android') {
 
-        OpenCV.stepsTogetCorner(imageAsBase64, (err) => console.log(err), async image => {
+        OpenCV.stepsTogetCorner(imageAsBase64, (err) => {
+          Alert.alert(
+            'Atenção',
+            'Nenhuma imagem detectada',
+            [
+              {text: 'Ok', onPress: () => {}},
+            ],
+            {cancelable: false},
+          )
+        }, async image => {
           this.setState({
             ...this.state,
             photoAsBase64: { content: image, isPhotoPreview: true, photoPath: image },
@@ -220,10 +229,11 @@ class App extends Component {
     if (this.state.photoAsBase64.isPhotoPreview) {
       return (
         <View style={styles.container}>
-          <Toast ref="toast" position="center" />
+          
           <Image
             source={{ uri: `data:image/png;base64,${this.state.photoAsBase64.content}` }}
             style={styles.imagePreview}
+            resizeMode='contain'
           />
           <View style={styles.repeatPhotoContainer}>
             <TouchableOpacity onPress={this.repeatPhoto}>
@@ -249,7 +259,7 @@ class App extends Component {
           ref={cam => {
             this.camera = cam;
           }}
-          autoFocus={true}
+          autoFocus={false}
           style={styles.preview}
           permissionDialogTitle={'Permission to use camera'}
           permissionDialogMessage={'We need your permission to use your camera phone'}
@@ -262,7 +272,6 @@ class App extends Component {
             </TouchableOpacity>
           </View>
         </Camera>
-        <Toast ref="toast" position="center" />
       </View>
     );
   }

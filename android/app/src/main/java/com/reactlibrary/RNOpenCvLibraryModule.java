@@ -48,15 +48,11 @@ public class RNOpenCvLibraryModule extends ReactContextBaseJavaModule {
 
     private final ReactApplicationContext reactContext;
 
-    Mat originalImage;
-    double ratio;
-    int widthRatio;
-    int heightRatio;
-    MatOfPoint contour;
-    Size size;
-    Mat cannyImage;
-    List<MatOfPoint> finalPoints;
-    Point[] sortPoints;
+    private Mat originalImage;
+    private double ratio;
+    private MatOfPoint contour;
+    private Mat cannyImage;
+    private Point[] sortPoints;
 
     public RNOpenCvLibraryModule(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -73,22 +69,28 @@ public class RNOpenCvLibraryModule extends ReactContextBaseJavaModule {
         Mat grayImage = null;
         Mat cannedImage = null;
         Mat resizedImage = null;
+        Mat gaussian = null;
 
         //Change image size to optimize image process
         this.ratio = this.originalImage.size().height/500;
 
-        this.heightRatio = Double.valueOf(this.originalImage.size().height / ratio).intValue();
-        this.widthRatio = Double.valueOf(this.originalImage.size().width / ratio).intValue();
-        this.size = new Size(this.widthRatio, this.heightRatio);
+        int heightRatio = Double.valueOf(this.originalImage.size().height / ratio).intValue();
+        int widthRatio = Double.valueOf(this.originalImage.size().width / ratio).intValue();
+        Size size = new Size(widthRatio, 500);
 
-        resizedImage = new Mat(this.size, CvType.CV_8UC4);
-        grayImage = new Mat(this.size, CvType.CV_8UC4);
-        cannedImage = new Mat(this.size, CvType.CV_8UC1);
+//        Log.d("OPEN_CV_DIMENSIONS", "WIDTH: "+widthRatio)
 
-        Imgproc.resize(this.originalImage, resizedImage, this.size);
-        Imgproc.cvtColor(resizedImage, grayImage, Imgproc.COLOR_RGBA2GRAY, 4);
-//        Imgproc.adaptiveThreshold(grayImage, grayImage, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY_INV, 13, 12);
-        Imgproc.Canny(grayImage.clone(), cannedImage, 50, 150, 3, false);
+        resizedImage = new Mat(size, CvType.CV_8UC3);
+        grayImage = new Mat(size, CvType.CV_8UC1);
+        gaussian = new Mat(size, CvType.CV_8UC3);
+        cannedImage = new Mat(size, CvType.CV_8UC1);
+
+        Imgproc.resize(this.originalImage, resizedImage, size);
+        Imgproc.cvtColor(resizedImage, grayImage, Imgproc.COLOR_RGBA2GRAY);
+        Imgproc.medianBlur(grayImage, gaussian, 5);
+        Imgproc.adaptiveThreshold(gaussian, gaussian, 255, Imgproc.ADAPTIVE_THRESH_MEAN_C, Imgproc.THRESH_BINARY_INV, 11, 2);
+        Imgproc.GaussianBlur(gaussian, gaussian, new Size(5, 5), 0);
+        Imgproc.Canny(gaussian, cannedImage, 50, 150);
 
         this.cannyImage = cannedImage;
 
@@ -110,20 +112,20 @@ public class RNOpenCvLibraryModule extends ReactContextBaseJavaModule {
 
         ArrayList<MatOfPoint> srcContours = new ArrayList<>(Arrays.asList(contour));
 
-        Log.d("OPEN_CV_ARRAY", srcContours+"");
+        //Log.d("OPEN_CV_ARRAY", srcContours+"");
 
         return contours;
     }
 
     //String imageBase64
-    private void turnIntoMap(Bitmap image) {
+    private void turnIntoMap(String imageBase64) {
 
-//        BitmapFactory.Options options = new BitmapFactory.Options();
-//        options.inDither = true;
-//        options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-//
-//        byte[] decodedString = Base64.decode(image, Base64.DEFAULT);
-//        Bitmap image = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inDither = true;
+        options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+
+        byte[] decodedString = Base64.decode(imageBase64, Base64.DEFAULT);
+        Bitmap image = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
 
         Mat imageMat = new Mat();
         Utils.bitmapToMat(image, imageMat);
@@ -213,15 +215,22 @@ public class RNOpenCvLibraryModule extends ReactContextBaseJavaModule {
             Point[] points = approx.toArray();
             ArrayList<Point> srcPoints = new ArrayList<>(Arrays.asList(points));
 
-            Log.d("AREA", Imgproc.contourArea(c)+"");
-            Log.d("POINTS", srcPoints+"");
-            Log.d("POINTS_LENGTH", srcPoints.size()+"");
+            //Log.d("AREA", Imgproc.contourArea(c)+"");
+            //Log.d("POINTS", srcPoints+"");
+            //Log.d("POINTS_LENGTH", srcPoints.size()+"");
 
             if(srcPoints.size() == 4) {
-                Log.d("CHOOSED_AREA", Imgproc.contourArea(c)+"");
-                Log.d("CHOOSED_POINTS", srcPoints+"");
-                this.contour = c;
-                return  points;
+                double area = Imgproc.contourArea(c);
+
+                //Log.d("CHOOSED_AREA", area+"");
+                //Log.d("CHOOSED_POINTS", srcPoints+"");
+
+                if(area > 1000) {
+                    this.contour = c;
+                    return  points;
+                }
+
+                return null;
             }
         }
 
@@ -299,52 +308,81 @@ public class RNOpenCvLibraryModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public  void stepsTogetCorner(String imageAsBase64, Callback errorCallback, Callback successCallback) {
         try {
-            String path = Environment.getExternalStorageDirectory().getAbsolutePath()+"/image1.jpg";
+//            String path = Environment.getExternalStorageDirectory().getAbsolutePath()+"/image4.jpg";
+//
+//            File file = new File(path);
+//
+//            if(file.exists()) {
+//                Log.d("EXIST", "SIM");
+//            }else {
+//                Log.d("EXIST", "NAO");
+//            }
+//
+//            FileInputStream fis = null;
+//            try {
+//                fis = new FileInputStream(file);
+//            } catch (FileNotFoundException e) {
+//                e.printStackTrace();
+//            }
+//
+//            Bitmap bm = BitmapFactory.decodeStream(fis);
 
-            File file = new File(path);
+            long startTime = System.currentTimeMillis();
 
-            if(file.exists()) {
-                Log.d("EXIST", "SIM");
-            }else {
-                Log.d("EXIST", "NAO");
-            }
-
-            FileInputStream fis = null;
-            try {
-                fis = new FileInputStream(file);
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
-
-            Bitmap bm = BitmapFactory.decodeStream(fis);
-
+            //Log.d("OPEN_CV_START", "START");
             //Converting image
-            turnIntoMap(bm);
+            turnIntoMap(imageAsBase64);
 
             ArrayList<MatOfPoint> contours = getContours();
 
+            long endTimeContours = System.currentTimeMillis();
+            //.d("OPEN_CV_END_CONTOURS", (endTimeContours - startTime)+"");
+
             Point[] rectPoints = detectRect(contours);
 
-            sortPoints(rectPoints);
+            long endTimeRect = System.currentTimeMillis();
+            //Log.d("OPEN_CV_END_RECT", (endTimeRect - startTime)+"");
 
-            Mat perspective = changePerspective();
+            if(rectPoints == null) {
+                errorCallback.invoke(false);
 
-            //To show rect
-            //ArrayList<MatOfPoint> screenCnt = defaultPoints(rectPoints);
-            //Imgproc.drawContours(this.originalImage, screenCnt, -1, new Scalar(0,255,0), 5);
+            } else {
 
-            //Bitmap imageConvert;
-            Bitmap imageConvert = Bitmap.createBitmap(perspective.cols(), perspective.rows(), Bitmap.Config.ARGB_8888);
-            Utils.matToBitmap(perspective, imageConvert);
+                sortPoints(rectPoints);
 
-            //convert bitmap into base64 string
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            imageConvert.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
+                long endTimeOrder = System.currentTimeMillis();
+                //Log.d("OPEN_CV_END_ORDER", (endTimeOrder - startTime)+"");
 
-            byte[] byteArray = byteArrayOutputStream .toByteArray();
-            String encoded = Base64.encodeToString(byteArray, Base64.DEFAULT);
+                Mat perspective = changePerspective();
 
-            successCallback.invoke(encoded);
+                long endTimePerspective = System.currentTimeMillis();
+                //Log.d("OPEN_CV_END_PERSPECTIVE", (endTimePerspective - startTime)+"");
+
+                long endTime = System.currentTimeMillis();
+                //Log.d("OPEN_CV_END", (endTime - startTime)+"");
+
+                //To show detected rect uncoment this two lines
+                //ArrayList<MatOfPoint> screenCnt = defaultPoints(rectPoints);
+                //Imgproc.drawContours(this.originalImage, screenCnt, -1, new Scalar(0,255,0), 5);
+
+
+                //To show detected rect change it to this.originalImage
+                Mat finalImage = perspective;
+
+                //Bitmap imageConvert;
+                Bitmap imageConvert = Bitmap.createBitmap(finalImage.cols(), finalImage.rows(), Bitmap.Config.ARGB_8888);
+                Utils.matToBitmap(finalImage, imageConvert);
+
+                //convert bitmap into base64 string
+                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                imageConvert.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
+
+                byte[] byteArray = byteArrayOutputStream .toByteArray();
+                String encoded = Base64.encodeToString(byteArray, Base64.DEFAULT);
+
+                successCallback.invoke(encoded);
+
+            }
 
         } catch (Exception e) {
 
