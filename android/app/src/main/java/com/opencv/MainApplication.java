@@ -3,6 +3,7 @@ package com.opencv;
 import android.app.Application;
 
 import com.facebook.react.ReactApplication;
+import org.wonday.orientation.OrientationPackage;
 import com.reactnativecommunity.cameraroll.CameraRollPackage;
 import com.RNFetchBlob.RNFetchBlobPackage;
 import fr.snapp.imagebase64.RNImgToBase64Package;
@@ -42,6 +43,7 @@ public class MainApplication extends Application implements ReactApplication {
     protected List<ReactPackage> getPackages() {
       return Arrays.<ReactPackage>asList(
               new MainReactPackage(),
+            new OrientationPackage(),
             new CameraRollPackage(),
             new RNFetchBlobPackage(),
             new RNImgToBase64Package(),
