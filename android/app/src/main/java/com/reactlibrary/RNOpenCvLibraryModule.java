@@ -306,7 +306,7 @@ public class RNOpenCvLibraryModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public  void stepsTogetCorner(String imageAsBase64, Callback errorCallback, Callback successCallback) {
+    public  void scanImage(String imageAsBase64, Callback errorCallback, Callback successCallback) {
         try {
 //            String path = Environment.getExternalStorageDirectory().getAbsolutePath()+"/image4.jpg";
 //

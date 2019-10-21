@@ -44,7 +44,7 @@ function Camera() {
 
     function scanImage(image) {
         if(Platform.OS === 'android') {
-            OpenCV.stepsTogetCorner(image, (err) => {
+            OpenCV.scanImage(image, (err) => {
                 setImage(null)
                 setIsTakingPicture(false)
                 Alert.alert(
