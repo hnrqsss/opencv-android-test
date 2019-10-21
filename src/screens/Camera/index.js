@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useRef } from 'react'
 
 import {
     View,
@@ -19,22 +19,29 @@ function Camera() {
     const [image, setImage] = useState(null)
     let cameraRef = useRef(null)
     
-    async function takingPicture() {
+    async function takingPicture(image = undefined) {
         try {
+            
+            let imageLocal = ''
             
             setIsTakingPicture(true)
 
-            const options = { quality: 0.8, base64: true }
-            
-            if(cameraRef.current) {
-            
-                const data = await cameraRef.current.takePictureAsync(options)
-                
-                scanImage(data.base64)
+            if(image !== undefined) {
+
+                imageLocal = image
 
             } else {
-                setIsTakingPicture(false)
+                
+                const options = { quality: 0.8, base64: true }
+            
+                if(cameraRef.current) {
+                    const data = await cameraRef.current.takePictureAsync(options)
+                    imageLocal = data.base64
+                }
             }
+
+            scanImage(imageLocal)
+
         
         } catch(error) {
             console.log('err',error)
