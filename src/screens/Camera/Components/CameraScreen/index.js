@@ -8,17 +8,9 @@ import { styles } from './styles'
 import { Icon } from '../../../../Components'
 
 function CameraScreen({
-    image,
-    setImage,
-    isTakingPicture,
-    setIsTakingPicture,
+    takingPicture,
+    cameraRef,
 }) {
-
-    const camera = useRef(null)
-
-    // const takingPicture = useCallback(async () => {
-
-    // }, [])
 
     return (
         <View style={styles.container}>
@@ -28,11 +20,17 @@ function CameraScreen({
             </View>
 
             <Camera
-                ref={ref => camera.ref = ref}
+                ref={cameraRef}
                 autoFocus={false}
                 style={styles.preview}
-                permissionDialogTitle={'Permission to use camera'}
-                permissionDialogMessage={'We need your permission to use your camera phone'}
+                captureAudio={false}
+                androidCameraPermissionOptions={
+                    {
+                        title: 'Permission to use camera',
+                        message: 'We need your permission to use your camera phone'
+                    }
+                }
+
             ></Camera>
         
             <View style={styles.buttonContainer}>
@@ -45,7 +43,7 @@ function CameraScreen({
                 </View>
                 
                 <TouchableOpacity
-                    onPress={() => {}}
+                    onPress={() => takingPicture()}
                     style={styles.buttonBorder}
                 >
                     <View style={styles.button} />
